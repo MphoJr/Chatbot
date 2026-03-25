@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const sequelize = require("./db");
-const University = require("./models/University");
+const University = require("./models/university");
 const FAQ = require("./models/FAQ");
 
 const app = express();
