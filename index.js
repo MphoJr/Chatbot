@@ -1,34 +1,32 @@
 const express = require("express");
 const cors = require("cors");
-const { PrismaClient } = require("@prisma/client");
+const sequelize = require("./db");
+const University = require("./models/University");
+const FAQ = require("./models/FAQ");
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
 
-app.use("/universities", universityRoutes);
-app.use("/faqs", faqRoutes);
-
 // ✅ Get all universities
 app.get("/universities", async (req, res) => {
   try {
-    const universities = await prisma.university.findMany();
+    const universities = await University.findAll();
     res.json(universities);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch universities" });
   }
 });
 
-// ✅ Get one university by name
+// ✅ Get one university by name (with FAQs)
 app.get("/universities/:name", async (req, res) => {
   try {
     const { name } = req.params;
-    const university = await prisma.university.findUnique({
+    const university = await University.findOne({
       where: { name },
-      include: { faqs: true },
+      include: FAQ,
     });
     if (!university)
       return res.status(404).json({ error: "University not found" });
@@ -38,16 +36,19 @@ app.get("/universities/:name", async (req, res) => {
   }
 });
 
-// ✅ Get FAQs (general career guidance, funding, etc.)
+// ✅ Get FAQs
 app.get("/faqs", async (req, res) => {
   try {
-    const faqs = await prisma.fAQ.findMany();
+    const faqs = await FAQ.findAll();
     res.json(faqs);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch FAQs" });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Chatbot API running on http://localhost:${PORT}`);
+// Sync DB and start server
+sequelize.sync().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Chatbot API running on http://localhost:${PORT}`);
+  });
 });
